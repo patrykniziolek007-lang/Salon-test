@@ -99,17 +99,30 @@ function ownerMail(b) {
   return { subj:`Nowa rezerwacja: ${b.name} — ${shortDate(b.date)}, ${b.time}`,
     body:`Nowa prośba o wizytę:\n\n${b.name}\ntel. ${b.phone}\n${b.email}\n\n${s}\n${longDate(b.date)}, godz. ${b.time}\n${b.note ? `Uwagi: ${b.note}\n` : ''}\nKod: ${b.id}\n\nZaakceptuj lub odrzuć w panelu salonu.` };
 }
-async function sendMail(env, to, subj, body) {
-  if (!env.RESEND_API_KEY || !env.MAIL_FROM || !to) return false;
+async function sendMailDetailed(env, to, subj, body) {
+  if (!env.RESEND_API_KEY) return { ok: false, error: 'Brak sekretu RESEND_API_KEY w ustawieniach Cloudflare.' };
+  if (!env.MAIL_FROM)      return { ok: false, error: 'Brak sekretu MAIL_FROM — adresu nadawcy, np. rezerwacje@twojadomena.pl.' };
+  if (!to)                 return { ok: false, error: 'Brak adresu odbiorcy (sekret OWNER_EMAIL).' };
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: `${SALON.name} <${env.MAIL_FROM}>`, to: [to], subject: subj, text: body }),
     });
-    if (!r.ok) console.log('Resend:', r.status, await r.text());
-    return r.ok;
-  } catch (e) { console.log('Resend error:', e.message); return false; }
+    if (r.ok) return { ok: true };
+    const txt = (await r.text()).slice(0, 300);
+    console.log('Resend:', r.status, txt);
+    const hint = r.status === 403 || /domain/i.test(txt)
+      ? ' Najczęstsza przyczyna: domena z MAIL_FROM nie ma w Resend statusu Verified.'
+      : r.status === 401 ? ' Klucz RESEND_API_KEY jest nieprawidłowy.' : '';
+    return { ok: false, error: `Resend odrzucił wysyłkę (${r.status}): ${txt}${hint}` };
+  } catch (e) {
+    console.log('Resend error:', e.message);
+    return { ok: false, error: 'Nie udało się połączyć z Resend: ' + e.message };
+  }
+}
+async function sendMail(env, to, subj, body) {
+  return (await sendMailDetailed(env, to, subj, body)).ok;
 }
 
 /* ---------- pomocnicze ---------- */
@@ -262,8 +275,8 @@ export async function onRequest(context) {
         b.emails.push({ kind: status, at: new Date().toISOString(), ...m });
         await db.prepare(`UPDATE bookings SET status=?, reason=?, decided_at=?, emails=? WHERE id=?`)
           .bind(status, b.reason || null, new Date().toISOString(), JSON.stringify(b.emails), b.id).run();
-        const sent = await sendMail(env, b.email, m.subj, m.body);
-        return json({ booking: b, mail: m, sent });
+        const res = await sendMailDetailed(env, b.email, m.subj, m.body);
+        return json({ booking: b, mail: m, sent: res.ok, mailError: res.error || null });
       }
 
       case 'seed': {
@@ -309,9 +322,9 @@ export async function onRequest(context) {
       case 'testmail': {
         if (!admin) return json({ error: 'Zaloguj się.' }, 401);
         const to = env.OWNER_EMAIL || SALON.email;
-        const sent = await sendMail(env, to, `Test wysyłki — ${SALON.name}`,
+        const res = await sendMailDetailed(env, to, `Test wysyłki — ${SALON.name}`,
           'To jest wiadomość testowa z Twojej strony.\n\nJeśli ją widzisz, powiadomienia o rezerwacjach będą działać.');
-        return json({ sent, to, configured: !!(env.RESEND_API_KEY && env.MAIL_FROM) });
+        return json({ sent: res.ok, to, from: env.MAIL_FROM || null, error: res.error || null });
       }
 
       default:

@@ -37,7 +37,7 @@ const STATUS = {
 const pill = s => `<span class="pill ${STATUS[s].c}">${STATUS[s].t}</span>`;
 
 const S = { sel:{service:null,date:null,time:null}, step:1, form:{name:'',phone:'',email:'',note:'',consent:false},
-            errors:{}, created:null, cal:{}, loading:false, lookup:null, lookupMiss:false };
+            errors:{}, created:null, cal:{}, calError:null, loading:false, lookup:null, lookupMiss:false };
 
 async function api(action, opts = {}){
   const q = opts.query ? '?' + String(opts.query).replace(/^[?&]/, '') : '';
@@ -49,8 +49,10 @@ async function api(action, opts = {}){
 }
 async function calendarFor(sid){
   if (S.cal[sid]) return S.cal[sid];
-  const {data} = await api('calendar', {query:`&service=${encodeURIComponent(sid)}`});
-  S.cal[sid] = data.days || [];
+  const {ok, data} = await api('calendar', {query:`&service=${encodeURIComponent(sid)}`});
+  S.calError = (!ok || !data.days) ? (data.error || 'Nie mogę teraz pobrać wolnych terminów.') : null;
+  if (S.calError) return [];
+  S.cal[sid] = data.days;
   return S.cal[sid];
 }
 const clearCal = () => { S.cal = {}; };
@@ -61,6 +63,7 @@ async function renderNext(){
   const sid = SERVICES.slice().sort((a,b) => a.dur - b.dur)[0].id;
   const days = await calendarFor(sid);
   const out = days.filter(d => d.times.length).slice(0,3);
+  if (S.calError) { $('#next-slots').innerHTML = `<p class="sub" style="margin-top:14px">Nie mogę teraz pokazać terminów. Odśwież stronę za chwilę albo zadzwoń.</p>`; return; }
   $('#next-slots').innerHTML = out.length ? out.map(d => `
     <div class="nextday"><span class="d">${d.date === isoToday() ? 'Dziś · ' : ''}${esc(longDate(d.date))}</span>
       <div class="chips">${d.times.slice(0,4).map(t => `<button type="button" class="chip" data-quick="${sid}|${d.date}|${t}">${t}</button>`).join('')}</div></div>`).join('')
@@ -103,6 +106,14 @@ function renderBooking(){
   if (S.step === 2) {
     const s = svcById(S.sel.service), days = S.cal[s.id] || [];
     if (S.loading && !days.length) { body.innerHTML = `<h3>Wybierz termin</h3><div class="empty">Sprawdzam wolne godziny…</div>`; return; }
+    if (!days.length) {
+      body.innerHTML = `<h3>Wybierz termin</h3>
+        <div class="empty" style="border-color:var(--bad);color:var(--bad)">Kalendarz jest chwilowo niedostępny.<br><span class="muted" style="font-size:.84rem">${esc(S.calError || '')}</span></div>
+        <div class="row-actions"><button type="button" class="btn btn-ghost" data-step="1">Wstecz</button>
+          <button type="button" class="btn btn-gold" id="retrycal">Spróbuj ponownie</button></div>
+        <p class="muted" style="margin-top:14px;font-size:.88rem">Możesz też po prostu zadzwonić — numer znajdziesz w sekcji „Godziny i dojazd”.</p>`;
+      return;
+    }
     if (!S.sel.date || !days.some(d => d.date === S.sel.date)) S.sel.date = (days.find(d => d.times.length) || days[0] || {}).date;
     const times = timesFor(s.id, S.sel.date);
     if (S.sel.time && !times.includes(S.sel.time)) S.sel.time = null;
@@ -235,6 +246,7 @@ document.addEventListener('click', async e => {
   if (d.date) { S.sel.date = d.date; S.sel.time = null; renderBooking(); return; }
   if (d.time) { S.sel.time = d.time; renderBooking(); return; }
   if (d.step && !t.disabled) { await goStep(+d.step); return; }
+  if (t.id === 'retrycal') { clearCal(); await goStep(2); return; }
   if (t.id === 'again') { S.created = null; S.sel = {service:null,date:null,time:null}; clearCal(); S.step = 1; renderBooking(); renderNext(); return; }
   if (d.lookup) { e.preventDefault(); await lookup(d.lookup); $('#status').scrollIntoView(); return; }
   if (d.cancel) {

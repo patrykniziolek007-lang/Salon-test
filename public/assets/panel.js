@@ -151,7 +151,9 @@ async function decide(code, status, reason){
   const lbl = {accepted:'Zaakceptowano', rejected:'Odrzucono', cancelled:'Odwołano'}[status];
   const who = first(data.booking.name);
   if (data.sent) toast(`${lbl} · e-mail wysłany do ${who}`, 'Pokaż e-mail', () => showMail(data.booking.email, data.mail));
-  else toast(`${lbl}. E-mail NIE został wysłany — sprawdź ustawienia poczty.`, 'Pokaż treść', () => showMail(data.booking.email, data.mail));
+  else toast(`${lbl}. E-mail NIE wyszedł — klient nic nie dostał.`, 'Dlaczego?', () =>
+    showMail(data.booking.email, {subj: data.mail.subj, body:
+      'NIE WYSŁANO: ' + (data.mailError || 'nieznany błąd') + '\n\n--- treść, która miała pójść ---\n\n' + data.mail.body}));
 }
 function showMail(to, m){
   $('#mail-to').textContent = to; $('#mail-subj').textContent = m.subj; $('#mail-body').textContent = m.body;
@@ -180,8 +182,13 @@ document.addEventListener('click', async e => {
   if (t.id === 'unseed') { t.disabled = true; await api('unseed'); await load(true); toast('Usunięto przykłady'); return; }
   if (t.id === 'testmail') {
     t.disabled = true; const {data} = await api('testmail'); t.disabled = false;
-    toast(data.sent ? `Wysłano test na ${data.to} — sprawdź skrzynkę (także spam).`
-                    : `Nie udało się wysłać (metoda: ${data.method}). Zmień ustawienia poczty w config.php.`);
+    if (data.sent) { toast(`Wysłano test na ${data.to} — sprawdź skrzynkę, także spam.`); return; }
+    toast('E-mail nie wyszedł. Zobacz szczegóły.', 'Dlaczego?', () =>
+      showMail(data.to || '—', {subj:'Wysyłka e-maili nie działa', body:
+        (data.error || 'Nieznany błąd.') + '\n\nNadawca (MAIL_FROM): ' + (data.from || 'nie ustawiony') +
+        '\nOdbiorca (OWNER_EMAIL): ' + (data.to || 'nie ustawiony') +
+        '\n\nSekrety ustawiasz w Cloudflare: projekt → Settings → Variables and Secrets.' +
+        '\nPo dodaniu sekretu zrób Retry deployment, inaczej nie zadziała.'}));
     return;
   }
   if (t.id === 'mail-close') $('#maildlg').close();
