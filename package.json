@@ -1,0 +1,12 @@
+{
+  "name": "salon-rezerwacje",
+  "private": true,
+  "scripts": {
+    "db:local": "wrangler d1 execute salon --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute salon --remote --file=schema.sql",
+    "dev": "wrangler pages dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
