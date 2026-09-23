@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salon fryzjerski — rezerwacje online</title>
+<meta name="description" content="Zarezerwuj wizytę online, bez dzwonienia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Montserrat:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top"><span id="brand">Salon</span> <small id="brand-sub"></small></a>
+    <nav aria-label="Główna">
+      <a href="#uslugi">Cennik</a><a href="#o-mnie">O mnie</a><a href="#godziny">Godziny i dojazd</a><a href="#status">Moja rezerwacja</a>
+    </nav>
+    <a class="btn btn-ink btn-sm" href="#rezerwacja">Zarezerwuj</a>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="shears" aria-hidden="true">
+    <svg viewBox="0 0 200 200"><circle cx="52" cy="150" r="26"/><circle cx="148" cy="150" r="26"/><path d="M70 131 L150 20"/><path d="M130 131 L50 20"/><circle cx="100" cy="92" r="4"/></svg>
+  </div>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow" id="hero-eyebrow">Pracownia fryzjerska</p>
+      <h1 id="hero-title"></h1>
+      <p class="lead" id="hero-lead"></p>
+      <div class="ctas">
+        <a class="btn btn-gold" href="#rezerwacja">Zarezerwuj wizytę</a>
+        <a class="btn btn-ghost" id="hero-phone" href="#godziny">Kontakt</a>
+      </div>
+    </div>
+    <aside class="nextcard" aria-labelledby="next-h">
+      <h3 id="next-h">Najbliższe wolne godziny</h3>
+      <p class="sub">dla strzyżenia · kliknij, aby zarezerwować</p>
+      <div id="next-slots"><p class="sub" style="margin-top:14px">Sprawdzam terminy…</p></div>
+    </aside>
+  </div>
+</section>
+
+<section class="block" id="uslugi">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><p class="eyebrow">Cennik</p><h2>Usługi i ceny</h2></div>
+      <p>Ceny koloryzacji zależą od długości i gęstości włosów — dokładną kwotę ustalimy na miejscu.</p>
+    </div>
+    <div class="menu" id="menu"></div>
+  </div>
+</section>
+
+<section class="block" id="o-mnie" style="padding-top:0">
+  <div class="wrap about">
+    <div id="portrait-slot"></div>
+    <div>
+      <p class="eyebrow">O mnie</p>
+      <h2 id="about-title"></h2>
+      <p id="about-1"></p>
+      <p id="about-2"></p>
+      <div class="facts" id="facts"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block booking" id="rezerwacja">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><p class="eyebrow">Rezerwacja online</p><h2>Umów wizytę</h2></div>
+      <p id="booking-note"></p>
+    </div>
+    <div class="bk">
+      <div class="panelcard">
+        <div class="steps" id="steps"></div>
+        <div id="bk-body" aria-live="polite"><p class="muted">Wczytuję…</p></div>
+      </div>
+      <aside class="panelcard summary" id="summary" aria-label="Podsumowanie"></aside>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="status">
+  <div class="wrap status-grid">
+    <div>
+      <p class="eyebrow">Moja rezerwacja</p>
+      <h2 style="font-size:clamp(2.2rem,4.5vw,3.4rem);margin-top:8px">Sprawdź status wizyty</h2>
+      <p class="muted" style="margin-top:14px;max-width:44ch">Wpisz kod z potwierdzenia. Zobaczysz, czy wizyta jest już zaakceptowana, i w razie potrzeby ją odwołasz.</p>
+      <form class="codeform" id="codeform">
+        <label for="code-input" style="position:absolute;left:-9999px">Kod rezerwacji</label>
+        <input id="code-input" name="code" autocomplete="off" placeholder="np. K7Q4MP" maxlength="8">
+        <button class="btn btn-ink" type="submit">Sprawdź</button>
+      </form>
+      <p class="muted" id="last-code" style="margin-top:10px;font-size:.84rem"></p>
+    </div>
+    <div class="panelcard result" id="result" aria-live="polite">
+      <p class="muted">Tu pojawi się status Twojej rezerwacji.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="godziny" style="padding-top:0">
+  <div class="wrap hours">
+    <div>
+      <p class="eyebrow">Godziny otwarcia</p>
+      <table class="htable" id="htable"></table>
+    </div>
+    <div>
+      <p class="eyebrow">Kontakt i dojazd</p>
+      <div class="contact" id="contact"></div>
+      <p class="muted" style="margin-top:22px;font-size:.9rem" id="note-hours"></p>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">
+  <span id="footer-brand">©</span>
+  <span><a href="/panel.html" style="color:var(--ink-3)">Panel salonu</a></span>
+</div></footer>
+
+<div class="toast" id="toast" role="status"><span id="toast-t"></span><button type="button" id="toast-a" hidden></button></div>
+<script src="/assets/app.js"></script>
+</body>
+</html>
