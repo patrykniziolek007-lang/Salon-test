@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"                      # tak nazywa się baza w kodzie — NIE zmieniaj
 database_name = "salon"
-database_id = "TU-WKLEJ-ID-BAZY"    # ID z komendy: npx wrangler d1 create salon
+database_id = "e5cedb90-7d29-4cae-866d-bc2267b12865"    # ID z komendy: npx wrangler d1 create salon
