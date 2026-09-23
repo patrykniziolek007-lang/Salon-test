@@ -1,0 +1,8 @@
+# Skopiuj ten plik jako .dev.vars do testów na własnym komputerze.
+# Na produkcji te same wartości ustawiasz w Cloudflare:
+# Workers & Pages → projekt → Settings → Variables and Secrets
+PANEL_PASSWORD="haslo-do-panelu"
+SESSION_SECRET="dowolny-dlugi-losowy-ciag"
+RESEND_API_KEY="re_xxxxxxxxxxxxxxxx"
+MAIL_FROM="rezerwacje@twojadomena.pl"
+OWNER_EMAIL="twoj@email.pl"
